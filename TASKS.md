@@ -19,11 +19,15 @@ Work in `agents/config_a/` and `notebooks/01_config_a_tabular.ipynb`.
 - [ ] Tune Q-Learning hyperparameters (learning rate, epsilon decay, number of episodes)
 - [ ] Implement SARSA training loop (`agents/config_a/sarsa.py`)
 - [ ] Tune SARSA hyperparameters
-- [ ] Evaluate both agents using `utils/evaluation.eval_agent()` with `n_eval_episodes=1000, seed=42`
+- [ ] Run Policy Iteration / Value Iteration (`agents/config_a/dynamic_programming.py`) — gives the **optimal policy** as an upper-bound benchmark
+- [ ] Implement Q-Learning training loop (`agents/config_a/q_learning.py`)
+- [ ] Tune Q-Learning hyperparameters (learning rate, epsilon decay, number of episodes)
+- [ ] Implement SARSA training loop (`agents/config_a/sarsa.py`)
+- [ ] Tune SARSA hyperparameters
+- [ ] Evaluate all agents using `utils/evaluation.eval_agent()` with `n_eval_episodes=1000, seed=42`
 - [ ] Plot training curves (smoothed return over episodes)
-- [ ] Compare Q-Learning vs SARSA vs random baseline (survival rate, mean return)
-- [ ] Analyse convergence: how many episodes until stable performance?
-- [ ] (Optional) Add Dynamic Programming or Monte Carlo as a third method for extra comparison
+- [ ] Compare DP (optimal) vs Q-Learning vs SARSA vs random baseline (survival rate, mean return)
+- [ ] Analyse convergence: how many episodes until Q-Learning / SARSA approach the DP optimum?
 
 ---
 
