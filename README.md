@@ -7,10 +7,12 @@ Deadline: June 5, 2026
 
 | Name | Student ID | Role |
 |------|------------|------|
-| ...  | ...        | Config A lead |
-| ...  | ...        | Config B lead |
-| ...  | ...        | Extension lead |
-| ...  | ...        | Report lead |
+| Mehmet Karaca  | 20250344        | Config A lead |
+| Luis   | ...        | Config B lead |
+| Veronica  | ...        | Extension lead |
+| Margarida  | ...        | Report lead |
+| Miguel  | ...        | Report lead |
+
 
 ## Project Overview
 
@@ -32,10 +34,11 @@ Clinical reinforcement learning project using the **ICU-Sepsis-v2** environment,
 ## Setup
 
 ```bash
-python -m venv .venv
+uv sync
 source .venv/bin/activate      # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
 ```
+
+> Requires [uv](https://docs.astral.sh/uv/getting-started/installation/). Alternatively: `pip install -r requirements.txt`
 
 > **Important**: Always launch Jupyter from the **project root** so that the `envs` package is importable.
 
