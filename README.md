@@ -5,13 +5,13 @@ Deadline: June 5, 2026
 
 ## Group Members
 
-| Name | Student ID | Role |
-|------|------------|------|
-| Mehmet Karaca  | 20250344        | Config A lead |
-| Luis   | ...        | Config B lead |
-| Veronica  | ...        | Extension lead |
-| Margarida  | ...        | Report lead |
-| Miguel  | ...        | Report lead |
+| Name | Student ID |
+|------|------------|
+| Mehmet Karaca  | 20250344 |
+| Luis   | ... |
+| Veronica  | ... |
+| Margarida  | ... |
+| Miguel  | ... |
 
 
 ## Project Overview

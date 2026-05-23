@@ -1,46 +1,149 @@
 """
-PPO agent for Config B (47-dim continuous observation sepsis environment).
-Uses stable-baselines3 under the hood.
+PPO agent for Config B — 47-dim continuous observation sepsis environment.
+
+Implementation notes
+--------------------
+- Uses Stable-Baselines3 PPO with a custom MLP policy.
+- gamma=1.0 matches the environment convention (undiscounted returns).
+- ent_coef=0.01 adds a small entropy bonus to encourage exploration across
+  25 actions on what is otherwise a short-horizon (~10 steps) episode.
+- n_steps=1024 means ~100 complete episodes per update, giving a stable
+  gradient estimate before clipping.
+- RewardTrackingCallback logs episode returns during training so we can
+  plot a proper learning curve without relying on SB3's verbose output.
 """
 
-from stable_baselines3 import PPO
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+from typing import Callable
+
 import numpy as np
+from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import BaseCallback, EvalCallback
+from stable_baselines3.common.monitor import Monitor
+
+SEED = 42
 
 
-def make_ppo_agent(env_factory, total_timesteps: int = 200_000, seed: int = 42):
+# ── Hyperparameter config ────────────────────────────────────────────────────
+
+@dataclass
+class PPOConfig:
+    # Training
+    total_timesteps: int = 500_000
+    seed: int = SEED
+
+    # PPO core
+    learning_rate: float = 3e-4
+    n_steps: int = 1024        # env steps collected before each update
+    batch_size: int = 64       # minibatch size for gradient updates
+    n_epochs: int = 10         # passes over each collected batch
+    gamma: float = 1.0         # undiscounted (match env)
+    gae_lambda: float = 0.95   # GAE smoothing factor
+    clip_range: float = 0.2    # PPO clip epsilon
+    ent_coef: float = 0.01     # entropy bonus — encourages exploration
+    vf_coef: float = 0.5       # value function loss weight
+    max_grad_norm: float = 0.5 # gradient clipping
+
+    # Network architecture
+    net_arch: list = field(default_factory=lambda: [64, 64])
+
+
+# ── Callback: track episode rewards during training ──────────────────────────
+
+class RewardTrackingCallback(BaseCallback):
     """
-    Train a PPO agent.
+    Stores mean episode return after every completed rollout.
+    Use .episode_returns for the raw per-episode values and
+    .rollout_means for a smoother curve (mean over each rollout batch).
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.episode_returns: list[float] = []
+        self.rollout_means: list[float] = []
+        self._current_rollout: list[float] = []
+
+    def _on_step(self) -> bool:
+        # SB3 populates infos with 'episode' dict when an episode ends
+        for info in self.locals.get("infos", []):
+            if "episode" in info:
+                ret = float(info["episode"]["r"])
+                self.episode_returns.append(ret)
+                self._current_rollout.append(ret)
+        return True
+
+    def _on_rollout_end(self) -> None:
+        if self._current_rollout:
+            self.rollout_means.append(float(np.mean(self._current_rollout)))
+            self._current_rollout = []
+
+
+# ── Training ─────────────────────────────────────────────────────────────────
+
+def train_ppo(
+    env_factory: Callable,
+    cfg: PPOConfig = None,
+    save_path: str = "results/config_b/ppo_model",
+) -> tuple[PPO, RewardTrackingCallback]:
+    """
+    Train a PPO agent on the clinical sepsis environment.
 
     Args:
-        env_factory: zero-argument callable returning a fresh gymnasium env.
-        total_timesteps: total environment steps to train for.
-        seed: random seed.
+        env_factory : zero-argument callable returning a fresh gymnasium env.
+        cfg         : PPOConfig (uses defaults if None).
+        save_path   : where to save the trained model (no extension needed).
 
     Returns:
-        Trained SB3 PPO model.
+        (model, callback) — trained SB3 PPO model and the reward-tracking
+        callback whose .episode_returns can be used to plot the learning curve.
     """
-    env = env_factory()
+    cfg = cfg or PPOConfig()
+
+    # Wrap env in Monitor so SB3 gets episode stats
+    env = Monitor(env_factory())
 
     model = PPO(
         policy="MlpPolicy",
         env=env,
-        learning_rate=3e-4,
-        n_steps=2048,
-        batch_size=64,
-        n_epochs=10,
-        gamma=1.0,
-        gae_lambda=0.95,
-        clip_range=0.2,
-        verbose=1,
-        seed=seed,
+        learning_rate=cfg.learning_rate,
+        n_steps=cfg.n_steps,
+        batch_size=cfg.batch_size,
+        n_epochs=cfg.n_epochs,
+        gamma=cfg.gamma,
+        gae_lambda=cfg.gae_lambda,
+        clip_range=cfg.clip_range,
+        ent_coef=cfg.ent_coef,
+        vf_coef=cfg.vf_coef,
+        max_grad_norm=cfg.max_grad_norm,
+        policy_kwargs={"net_arch": cfg.net_arch},
+        verbose=0,
+        seed=cfg.seed,
     )
 
-    model.learn(total_timesteps=total_timesteps)
-    return model
+    callback = RewardTrackingCallback()
+    model.learn(total_timesteps=cfg.total_timesteps, callback=callback)
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    model.save(save_path)
+    print(f"Model saved to {save_path}.zip")
+
+    return model, callback
 
 
-def get_policy(model) -> callable:
-    """Wrap a trained SB3 model into a policy callable for eval_agent()."""
+# ── Load ─────────────────────────────────────────────────────────────────────
+
+def load_ppo(path: str = "results/config_b/ppo_model") -> PPO:
+    """Load a previously saved PPO model."""
+    return PPO.load(path)
+
+
+# ── Policy wrapper ────────────────────────────────────────────────────────────
+
+def get_policy(model: PPO) -> Callable:
+    """Wrap a trained SB3 PPO model into a policy callable for eval_agent()."""
     def policy_fn(obs):
         action, _ = model.predict(obs, deterministic=True)
         return int(action)
