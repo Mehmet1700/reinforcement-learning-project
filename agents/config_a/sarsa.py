@@ -43,8 +43,8 @@ class SARSAAgent:
     def train(self, env_factory) -> list:
         """Train for cfg.n_episodes episodes. Returns list of episode returns."""
         returns = []
+        env = env_factory()
         for _ in range(self.cfg.n_episodes):
-            env = env_factory()
             obs, _ = env.reset()
             a = self.select_action(obs, training=True)
             done = False
@@ -62,3 +62,5 @@ class SARSAAgent:
     def get_policy(self):
         """Return greedy policy callable for use with utils.evaluation.eval_agent()."""
         return lambda obs: int(np.argmax(self.Q[obs]))
+    
+    
