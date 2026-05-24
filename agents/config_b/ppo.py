@@ -50,6 +50,14 @@ class PPOConfig:
     # Network architecture
     net_arch: list = field(default_factory=lambda: [64, 64])
 
+    def __post_init__(self):
+        # CSV/JSON loading can silently convert ints to floats — enforce types
+        self.total_timesteps = int(self.total_timesteps)
+        self.seed            = int(self.seed)
+        self.n_steps         = int(self.n_steps)
+        self.batch_size      = int(self.batch_size)
+        self.n_epochs        = int(self.n_epochs)
+
 
 # ── Callback: track episode rewards during training ──────────────────────────
 

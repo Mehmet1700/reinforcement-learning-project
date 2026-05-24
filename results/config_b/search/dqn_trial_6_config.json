@@ -1,0 +1,1 @@
+{"learning_rate": 0.001, "exploration_fraction": 0.25, "target_update_interval": 500, "batch_size": 128}
