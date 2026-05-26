@@ -49,6 +49,7 @@ class PPOConfig:
 
     # Network architecture
     net_arch: list = field(default_factory=lambda: [64, 64])
+    activation_fn: type = None   # None → SB3 default (Tanh); pass e.g. torch.nn.ReLU
 
     def __post_init__(self):
         # CSV/JSON loading can silently convert ints to floats — enforce types
@@ -126,7 +127,10 @@ def train_ppo(
         ent_coef=cfg.ent_coef,
         vf_coef=cfg.vf_coef,
         max_grad_norm=cfg.max_grad_norm,
-        policy_kwargs={"net_arch": cfg.net_arch},
+        policy_kwargs={
+            "net_arch":      cfg.net_arch,
+            **({"activation_fn": cfg.activation_fn} if cfg.activation_fn is not None else {}),
+        },
         verbose=0,
         seed=cfg.seed,
     )

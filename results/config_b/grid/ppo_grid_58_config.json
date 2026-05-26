@@ -1,0 +1,1 @@
+{"learning_rate": 0.0003, "n_steps": 1024, "ent_coef": 0.01, "net_arch": [256, 128], "activation_fn": "ReLU", "batch_size": 128}
