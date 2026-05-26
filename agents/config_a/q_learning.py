@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 import numpy as np
+import time
 
 SEED = 42
 
@@ -40,21 +41,53 @@ class QLearningAgent:
         self.Q[s, a] += cfg.alpha * (target - self.Q[s, a])
         self._step += 1
 
-    def train(self, env_factory) -> list:
-        """Train for cfg.n_episodes episodes. Returns list of episode returns."""
+    def train(self, env_factory, verbose: bool = True, verbose_interval: int = 1000) -> list:
+        """Train for cfg.n_episodes episodes. Returns list of episode returns.
+        
+        Args:
+            env_factory: Function that creates a new environment
+            verbose: If True, print progress updates
+            verbose_interval: Print progress every N episodes
+        
+        Returns:
+            List of total returns for each episode
+        """
         returns = []
-        for _ in range(self.cfg.n_episodes):
-            obs, _ = env_factory().reset()
+        start_time = time.time()
+        
+        for episode in range(self.cfg.n_episodes):
+            # Create environment once per episode
+            env = env_factory()
+            obs, _ = env.reset()
             done = False
             total = 0.0
+            
             while not done:
                 a = self.select_action(obs, training=True)
-                next_obs, r, terminated, truncated, _ = env_factory().step(a)
+                # Use the same env instance for stepping
+                next_obs, r, terminated, truncated, _ = env.step(a)
                 done = terminated or truncated
                 self.update(obs, a, r, next_obs, done)
                 obs = next_obs
                 total += r
+            
             returns.append(total)
+            
+            # Print progress
+            if verbose and (episode + 1) % verbose_interval == 0:
+                elapsed = time.time() - start_time
+                avg_return = np.mean(returns[-verbose_interval:])
+                episodes_per_sec = (episode + 1) / elapsed
+                eta_remaining = (self.cfg.n_episodes - episode - 1) / episodes_per_sec if episodes_per_sec > 0 else 0
+                
+                print(f"Episode {episode + 1}/{self.cfg.n_episodes} | "
+                      f"Avg Return (last {verbose_interval}): {avg_return:.3f} | "
+                      f"Elapsed: {elapsed:.1f}s | ETA: {eta_remaining:.1f}s")
+        
+        if verbose:
+            total_time = time.time() - start_time
+            print(f"\n✓ Training complete! Total time: {total_time:.1f}s")
+        
         return returns
 
     def get_policy(self):
