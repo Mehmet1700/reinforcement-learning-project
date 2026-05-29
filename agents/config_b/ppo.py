@@ -32,7 +32,7 @@ SEED = 42
 @dataclass
 class PPOConfig:
     # Training
-    total_timesteps: int = 500_000
+    total_timesteps: int = 100_000
     seed: int = SEED
 
     # PPO core
@@ -72,6 +72,8 @@ class RewardTrackingCallback(BaseCallback):
     def __init__(self):
         super().__init__()
         self.episode_returns: list[float] = []
+        self.episode_survivals: list[int] = []
+        self.episode_timesteps: list[int] = []
         self.rollout_means: list[float] = []
         self._current_rollout: list[float] = []
 
@@ -81,6 +83,8 @@ class RewardTrackingCallback(BaseCallback):
             if "episode" in info:
                 ret = float(info["episode"]["r"])
                 self.episode_returns.append(ret)
+                self.episode_survivals.append(1 if ret > 0 else 0)
+                self.episode_timesteps.append(self.num_timesteps)
                 self._current_rollout.append(ret)
         return True
 

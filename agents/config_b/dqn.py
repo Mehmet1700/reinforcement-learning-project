@@ -34,7 +34,7 @@ SEED = 42
 @dataclass
 class DQNConfig:
     # Training
-    total_timesteps: int = 500_000
+    total_timesteps: int = 100_000
     seed: int = SEED
 
     # DQN core
@@ -76,6 +76,8 @@ class RewardTrackingCallback(BaseCallback):
     def __init__(self):
         super().__init__()
         self.episode_returns: list[float] = []
+        self.episode_survivals: list[int] = []
+        self.episode_timesteps: list[int] = []
         self._window: list[float] = []
         self.rollout_means: list[float] = []
 
@@ -84,8 +86,9 @@ class RewardTrackingCallback(BaseCallback):
             if "episode" in info:
                 ret = float(info["episode"]["r"])
                 self.episode_returns.append(ret)
+                self.episode_survivals.append(1 if ret > 0 else 0)
+                self.episode_timesteps.append(self.num_timesteps)
                 self._window.append(ret)
-                # emit a rollout mean every ~100 episodes
                 if len(self._window) >= 100:
                     self.rollout_means.append(float(np.mean(self._window)))
                     self._window = []
