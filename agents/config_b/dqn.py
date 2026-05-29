@@ -11,8 +11,12 @@ Implementation notes
   the short episode length (~10 steps).
 - learning_starts=2_000 fills the replay buffer before the first gradient
   step, ensuring diverse early batches.
+- gradient_steps=1 performs one gradient update per env step, keeping
+  learning stable and avoiding overfit to recent transitions.
 - RewardTrackingCallback mirrors the one in ppo.py so training curves are
   directly comparable between the two algorithms.
+- train_dqn accepts an optional callback so the notebook can pass a
+  CheckpointCallback (utils/callbacks.py) without duplicating model setup.
 """
 
 from __future__ import annotations
@@ -44,6 +48,7 @@ class DQNConfig:
     batch_size: int = 64
     gamma: float = 1.0              # undiscounted (match env)
     train_freq: int = 4             # update every N env steps
+    gradient_steps: int = 1         # gradient updates per env step
     target_update_interval: int = 500  # steps between target net syncs
 
     # Exploration (epsilon-greedy)
@@ -62,6 +67,7 @@ class DQNConfig:
         self.learning_starts         = int(self.learning_starts)
         self.batch_size              = int(self.batch_size)
         self.train_freq              = int(self.train_freq)
+        self.gradient_steps          = int(self.gradient_steps)
         self.target_update_interval  = int(self.target_update_interval)
 
 
@@ -101,6 +107,7 @@ def train_dqn(
     env_factory: Callable,
     cfg: DQNConfig = None,
     save_path: str = "results/config_b/dqn_model",
+    callback: BaseCallback = None,
 ) -> tuple[DQN, RewardTrackingCallback]:
     """
     Train a DQN agent on the clinical sepsis environment.
@@ -109,10 +116,12 @@ def train_dqn(
         env_factory : zero-argument callable returning a fresh gymnasium env.
         cfg         : DQNConfig (uses defaults if None).
         save_path   : where to save the trained model (no extension needed).
+        callback    : optional SB3 callback; defaults to RewardTrackingCallback.
+                      Pass a CheckpointCallback (utils/callbacks.py) to enable
+                      mid-training evaluation and best-checkpoint selection.
 
     Returns:
-        (model, callback) — trained SB3 DQN model and the reward-tracking
-        callback whose .episode_returns can be used to plot the learning curve.
+        (model, callback) — trained SB3 DQN model and the callback used.
     """
     cfg = cfg or DQNConfig()
 
@@ -127,6 +136,7 @@ def train_dqn(
         batch_size=cfg.batch_size,
         gamma=cfg.gamma,
         train_freq=cfg.train_freq,
+        gradient_steps=cfg.gradient_steps,
         target_update_interval=cfg.target_update_interval,
         exploration_fraction=cfg.exploration_fraction,
         exploration_final_eps=cfg.exploration_final_eps,
@@ -138,14 +148,14 @@ def train_dqn(
         seed=cfg.seed,
     )
 
-    callback = RewardTrackingCallback()
-    model.learn(total_timesteps=cfg.total_timesteps, callback=callback)
+    cb = callback if callback is not None else RewardTrackingCallback()
+    model.learn(total_timesteps=cfg.total_timesteps, callback=cb)
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     model.save(save_path)
     print(f"Model saved to {save_path}.zip")
 
-    return model, callback
+    return model, cb
 
 
 # ── Load ─────────────────────────────────────────────────────────────────────

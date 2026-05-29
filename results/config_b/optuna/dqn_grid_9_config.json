@@ -1,0 +1,1 @@
+{"learning_rate": 6.089856330017124e-05, "exploration_fraction": 0.17977730688967958, "exploration_final_eps": 0.15, "buffer_size": 50000, "target_update_interval": 250, "activation_fn": "Tanh", "net_arch": [128, 128], "batch_size": 64}

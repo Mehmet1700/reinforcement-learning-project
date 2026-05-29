@@ -1,0 +1,1 @@
+{"learning_rate": 0.00022987528923660826, "n_steps": 2048, "ent_coef": 0.004512234654985014, "n_epochs": 10, "clip_range": 0.2, "activation_fn": "Tanh", "net_arch": [128, 128], "batch_size": 128}

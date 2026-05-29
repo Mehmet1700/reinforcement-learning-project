@@ -100,6 +100,7 @@ def train_ppo(
     env_factory: Callable,
     cfg: PPOConfig = None,
     save_path: str = "results/config_b/ppo_model",
+    callback: BaseCallback = None,
 ) -> tuple[PPO, RewardTrackingCallback]:
     """
     Train a PPO agent on the clinical sepsis environment.
@@ -108,10 +109,12 @@ def train_ppo(
         env_factory : zero-argument callable returning a fresh gymnasium env.
         cfg         : PPOConfig (uses defaults if None).
         save_path   : where to save the trained model (no extension needed).
+        callback    : optional SB3 callback; defaults to RewardTrackingCallback.
+                      Pass a CheckpointCallback (utils/callbacks.py) to enable
+                      mid-training evaluation and best-checkpoint selection.
 
     Returns:
-        (model, callback) — trained SB3 PPO model and the reward-tracking
-        callback whose .episode_returns can be used to plot the learning curve.
+        (model, callback) — trained SB3 PPO model and the callback used.
     """
     cfg = cfg or PPOConfig()
 
@@ -139,14 +142,14 @@ def train_ppo(
         seed=cfg.seed,
     )
 
-    callback = RewardTrackingCallback()
-    model.learn(total_timesteps=cfg.total_timesteps, callback=callback)
+    cb = callback if callback is not None else RewardTrackingCallback()
+    model.learn(total_timesteps=cfg.total_timesteps, callback=cb)
 
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     model.save(save_path)
     print(f"Model saved to {save_path}.zip")
 
-    return model, callback
+    return model, cb
 
 
 # ── Load ─────────────────────────────────────────────────────────────────────

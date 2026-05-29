@@ -1,0 +1,1 @@
+{"learning_rate": 0.00012162649157168055, "n_steps": 512, "ent_coef": 0.01269019179613123, "n_epochs": 20, "clip_range": 0.3, "activation_fn": "ReLU", "net_arch": [128, 128], "batch_size": 128}

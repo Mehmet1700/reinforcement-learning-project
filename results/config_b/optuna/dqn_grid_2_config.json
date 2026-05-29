@@ -1,0 +1,1 @@
+{"learning_rate": 0.00010841479693345978, "exploration_fraction": 0.20193019906931467, "exploration_final_eps": 0.05, "buffer_size": 50000, "target_update_interval": 250, "activation_fn": "ReLU", "net_arch": [128, 64], "batch_size": 64}
