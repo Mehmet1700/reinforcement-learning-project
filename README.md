@@ -10,7 +10,7 @@ Deadline: June 5, 2026
 | Mehmet Karaca  | 20250344 |
 | Luis   | ... |
 | Veronica  | ... |
-| Margarida  | ... |
+| Ana Macedo  | 20250405 |
 | Miguel  | ... |
 
 
@@ -18,9 +18,9 @@ Deadline: June 5, 2026
 
 Clinical reinforcement learning project using the **ICU-Sepsis-v2** environment, built on real MIMIC-III ICU data. The goal is to learn optimal treatment policies for sepsis patients (vasopressor dosing × IV fluid levels).
 
-| Configuration | Observation Space | Methods |
+| Configuration | Observation Space | Methods | 
 |---------------|-------------------|---------|
-| **Config A** | Discrete (716 states) | Q-Learning, SARSA |
+| **Config A** | Discrete (716 states) | DP, Q-Learning, SARSA |
 | **Config B** | Continuous (47-dim) | DQN, PPO |
 | **Extension** | TBD | TBD |
 
