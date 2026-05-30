@@ -207,3 +207,150 @@ def run_ppo_trial(
     except Exception as exc:
         print(f"[PPO {trial_idx:>3}] FAILED: {exc}", flush=True)
         return None
+
+
+# ── Q-Learning trial (Config A) ───────────────────────────────────────────────
+
+def run_ql_trial(
+    trial_idx: int,
+    params: dict,
+    save_dir: str,
+    n_episodes: int,
+    eval_episodes: int,
+    seed: int,
+    project_root: str,
+) -> dict | None:
+    """
+    Run one Q-Learning hyperparameter trial. Safe to call from a joblib worker.
+
+    Q-table cached as .npy; config cached as .json.
+    Returns a result dict, or None if the trial fails.
+    """
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    try:
+        import numpy as np                                        # noqa: PLC0415
+        from envs.env_setup import make_sepsis_env, N_STATES, N_ACTIONS  # noqa: PLC0415
+        from agents.config_a.q_learning import QLearningAgent, QLearningConfig  # noqa: PLC0415
+        from utils.evaluation import eval_agent                   # noqa: PLC0415
+
+        os.makedirs(save_dir, exist_ok=True)
+        npy_path = os.path.join(save_dir, f"ql_trial_{trial_idx}.npy")
+        cfg_path = os.path.join(save_dir, f"ql_trial_{trial_idx}_config.json")
+
+        cfg = QLearningConfig(n_episodes=n_episodes, **params)
+        agent = QLearningAgent(N_STATES, N_ACTIONS, cfg)
+
+        if os.path.exists(npy_path) and os.path.exists(cfg_path):
+            agent.Q = np.load(npy_path)
+            print(f"[QL  {trial_idx:>3}] loaded from cache", flush=True)
+        else:
+            # Reuse single env instance (reset each episode) — much faster than
+            # creating a new env per episode as the original notebook did.
+            env = make_sepsis_env(verbose=False)
+            for ep in range(n_episodes):
+                obs, _ = env.reset()
+                done = False
+                while not done:
+                    a = agent.select_action(obs, training=True)
+                    next_obs, r, term, trunc, _ = env.step(a)
+                    done = term or trunc
+                    agent.update(obs, a, r, next_obs, done)
+                    obs = next_obs
+            np.save(npy_path, agent.Q)
+            with open(cfg_path, "w") as fh:
+                json.dump(params, fh)
+            print(f"[QL  {trial_idx:>3}] trained & saved", flush=True)
+
+        res = eval_agent(
+            agent.get_policy(), make_sepsis_env,
+            n_eval_episodes=eval_episodes, seed=seed,
+        )
+        result = {
+            "trial":         trial_idx,
+            **params,
+            "survival_rate": res["survival_rate"],
+            "mean_return":   res["mean_return"],
+        }
+        print(
+            f"[QL  {trial_idx:>3}] "
+            f"alpha={params.get('alpha')}  "
+            f"eps_decay={params.get('epsilon_decay')}  "
+            f"eps_end={params.get('epsilon_end')}  "
+            f"→ survival={res['survival_rate']:.1%}",
+            flush=True,
+        )
+        return result
+
+    except Exception as exc:
+        print(f"[QL  {trial_idx:>3}] FAILED: {exc}", flush=True)
+        return None
+
+
+# ── SARSA trial (Config A) ────────────────────────────────────────────────────
+
+def run_sarsa_trial(
+    trial_idx: int,
+    params: dict,
+    save_dir: str,
+    n_episodes: int,
+    eval_episodes: int,
+    seed: int,
+    project_root: str,
+) -> dict | None:
+    """
+    Run one SARSA hyperparameter trial. Safe to call from a joblib worker.
+
+    Q-table cached as .npy; config cached as .json.
+    Returns a result dict, or None if the trial fails.
+    """
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    try:
+        import numpy as np                                        # noqa: PLC0415
+        from envs.env_setup import make_sepsis_env, N_STATES, N_ACTIONS  # noqa: PLC0415
+        from agents.config_a.sarsa import SARSAAgent, SARSAConfig  # noqa: PLC0415
+        from utils.evaluation import eval_agent                   # noqa: PLC0415
+
+        os.makedirs(save_dir, exist_ok=True)
+        npy_path = os.path.join(save_dir, f"sarsa_trial_{trial_idx}.npy")
+        cfg_path = os.path.join(save_dir, f"sarsa_trial_{trial_idx}_config.json")
+
+        cfg = SARSAConfig(n_episodes=n_episodes, **params)
+        agent = SARSAAgent(N_STATES, N_ACTIONS, cfg)
+
+        if os.path.exists(npy_path) and os.path.exists(cfg_path):
+            agent.Q = np.load(npy_path)
+            print(f"[SARSA {trial_idx:>3}] loaded from cache", flush=True)
+        else:
+            agent.train(make_sepsis_env)
+            np.save(npy_path, agent.Q)
+            with open(cfg_path, "w") as fh:
+                json.dump(params, fh)
+            print(f"[SARSA {trial_idx:>3}] trained & saved", flush=True)
+
+        res = eval_agent(
+            agent.get_policy(), make_sepsis_env,
+            n_eval_episodes=eval_episodes, seed=seed,
+        )
+        result = {
+            "trial":         trial_idx,
+            **params,
+            "survival_rate": res["survival_rate"],
+            "mean_return":   res["mean_return"],
+        }
+        print(
+            f"[SARSA {trial_idx:>3}] "
+            f"alpha={params.get('alpha')}  "
+            f"gamma={params.get('gamma')}  "
+            f"eps_decay={params.get('epsilon_decay')}  "
+            f"→ survival={res['survival_rate']:.1%}",
+            flush=True,
+        )
+        return result
+
+    except Exception as exc:
+        print(f"[SARSA {trial_idx:>3}] FAILED: {exc}", flush=True)
+        return None

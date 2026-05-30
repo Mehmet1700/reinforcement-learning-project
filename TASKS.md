@@ -4,10 +4,10 @@ Deadline: **June 5, 2026**
 
 ## Setup
 
-- [ ] Add all group members as GitHub collaborators (`gh repo invite <username>`)
+- [x ] Add all group members as GitHub collaborators (`gh repo invite <username>`)
 - [x] Fill in the group members table in `README.md`
-- [ ] Each member: clone repo, create a virtual environment, run `pip install -r requirements.txt`
-- [ ] Verify setup: run `notebooks/00_environment_exploration.ipynb` end-to-end without errors
+- [ x] Each member: clone repo, create a virtual environment, run `pip install -r requirements.txt`
+- [ x] Verify setup: run `notebooks/00_environment_exploration.ipynb` end-to-end without errors
 
 ---
 
