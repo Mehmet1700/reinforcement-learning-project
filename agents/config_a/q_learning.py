@@ -41,24 +41,26 @@ class QLearningAgent:
         self.Q[s, a] += cfg.alpha * (target - self.Q[s, a])
         self._step += 1
 
-    def train(self, env_factory, verbose: bool = True, verbose_interval: int = 1000) -> list:
+    def train(self, env_factory, seed: int = SEED, verbose: bool = True, verbose_interval: int = 1000) -> list:
         """Train for cfg.n_episodes episodes. Returns list of episode returns.
-        
+
         Args:
             env_factory: Function that creates a new environment
+            seed: master seed; the env is seeded once so the run is reproducible
             verbose: If True, print progress updates
             verbose_interval: Print progress every N episodes
-        
+
         Returns:
             List of total returns for each episode
         """
         returns = []
         start_time = time.time()
-        
+
+        # Create the environment once and seed it a single time; subsequent
+        # resets advance the same deterministic RNG stream (reproducible run).
+        env = env_factory()
         for episode in range(self.cfg.n_episodes):
-            # Create environment once per episode
-            env = env_factory()
-            obs, _ = env.reset()
+            obs, _ = env.reset(seed=seed if episode == 0 else None)
             done = False
             total = 0.0
             

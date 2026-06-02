@@ -12,7 +12,6 @@ Contents
 
 import numpy as np
 import matplotlib.pyplot as plt
-from numpy.testing import verbose
 import seaborn as sns
 import gymnasium as gym
 import icu_sepsis  # registers Sepsis/ICU-Sepsis-v2  # noqa: F401

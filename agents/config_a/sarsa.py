@@ -68,12 +68,16 @@ class SARSAAgent:
         self.Q[s, a] += self.current_alpha * (target - self.Q[s, a])
         self._step += 1
 
-    def train(self, env_factory) -> list:
-        """Train for cfg.n_episodes episodes. Returns list of episode returns."""
+    def train(self, env_factory, seed: int = SEED) -> list:
+        """Train for cfg.n_episodes episodes. Returns list of episode returns.
+
+        The environment is seeded once at the start so the whole training run is
+        reproducible; subsequent resets advance the same deterministic RNG stream.
+        """
         returns = []
         env = env_factory()
-        for _ in range(self.cfg.n_episodes):
-            obs, _ = env.reset()
+        for ep in range(self.cfg.n_episodes):
+            obs, _ = env.reset(seed=seed if ep == 0 else None)
             a = self.select_action(obs, training=True)
             done = False
             total = 0.0
