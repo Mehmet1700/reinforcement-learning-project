@@ -49,16 +49,17 @@ class EpisodicNoisyObsEnv(gym.Wrapper):
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
-        self.episode_noisy = np.random.rand() < self.malfunction_prob
+        # Use the env's seeded RNG (self.np_random) so noise is reproducible.
+        self.episode_noisy = self.np_random.random() < self.malfunction_prob
         if self.episode_noisy:
-            obs = (obs + np.random.normal(0, self.noise_std, obs.shape)).astype(np.float32)
+            obs = (obs + self.np_random.normal(0, self.noise_std, obs.shape)).astype(np.float32)
         info['noisy_episode'] = self.episode_noisy
         return obs, info
 
     def step(self, action):
         obs, r, te, tr, info = self.env.step(action)
         if self.episode_noisy:
-            obs = (obs + np.random.normal(0, self.noise_std, obs.shape)).astype(np.float32)
+            obs = (obs + self.np_random.normal(0, self.noise_std, obs.shape)).astype(np.float32)
         info['noisy_episode'] = self.episode_noisy
         return obs, r, te, tr, info
 
@@ -93,8 +94,9 @@ class EpisodicMissingObsEnv(gym.Wrapper):
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
-        if np.random.rand() < self.missing_prob:
-            self.missing_mask = np.random.choice(obs.shape[0], self.n_missing, replace=False)
+        # Use the env's seeded RNG (self.np_random) so missingness is reproducible.
+        if self.np_random.random() < self.missing_prob:
+            self.missing_mask = self.np_random.choice(obs.shape[0], self.n_missing, replace=False)
             obs = obs.copy()
             obs[self.missing_mask] = 0.0
         else:
@@ -141,8 +143,9 @@ class AcuteEventEnv(gym.Wrapper):
 
     def step(self, action):
         obs, r, te, tr, info = self.env.step(action)
-        # Only fire during ongoing episodes not when already terminal
-        if not (te or tr) and np.random.rand() < self.event_prob:
+        # Only fire during ongoing episodes not when already terminal.
+        # Use the env's seeded RNG (self.np_random) so events are reproducible.
+        if not (te or tr) and self.np_random.random() < self.event_prob:
             info['acute_event'] = True
             return obs, 0.0, True, False, info
         info['acute_event'] = False
