@@ -88,7 +88,7 @@ class QLearningAgent:
         
         if verbose:
             total_time = time.time() - start_time
-            print(f"\n✓ Training complete! Total time: {total_time:.1f}s")
+            print(f"\nTraining complete. Total time: {total_time:.1f}s")
         
         return returns
 

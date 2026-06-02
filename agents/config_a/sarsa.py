@@ -19,8 +19,8 @@ class SARSAConfig:
     alpha_decay: str = 'constant'                # Options: 'constant' or 'linear'
     q_init: Union[float, str] = 0.0              # Options: 0.0, 1.0, or 'random'
 
-    alpha_decay_steps: int = 5_000  # Your "X" steps
-    alpha_floor: float = 0.001       # Your "Y" floor value
+    alpha_decay_steps: int = 5_000  # steps over which alpha decays linearly
+    alpha_floor: float = 0.001       # minimum alpha after full decay
 
 class SARSAAgent:
     
@@ -95,8 +95,3 @@ class SARSAAgent:
         """Return greedy policy callable for use with utils.evaluation.eval_agent()."""
         return lambda obs: int(np.argmax(self.Q[obs]))
 
-
-
-
-
-    
