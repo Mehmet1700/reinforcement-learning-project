@@ -250,7 +250,8 @@ def run_ql_trial(
             # creating a new env per episode as the original notebook did.
             env = make_sepsis_env(verbose=False)
             for ep in range(n_episodes):
-                obs, _ = env.reset()
+                # seed once so each trial's training run is reproducible
+                obs, _ = env.reset(seed=seed if ep == 0 else None)
                 done = False
                 while not done:
                     a = agent.select_action(obs, training=True)
@@ -325,7 +326,7 @@ def run_sarsa_trial(
             agent.Q = np.load(npy_path)
             print(f"[SARSA {trial_idx:>3}] loaded from cache", flush=True)
         else:
-            agent.train(make_sepsis_env)
+            agent.train(make_sepsis_env, seed=seed)
             np.save(npy_path, agent.Q)
             with open(cfg_path, "w") as fh:
                 json.dump(params, fh)
