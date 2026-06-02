@@ -159,7 +159,7 @@ class ContinuousICUSepsisEnv(gym.Env):
         """Return the continuous feature vector for a given state index."""
         obs = self._cluster_centers[state_idx].copy()
         if self.obs_noise_std > 0:
-            noise = np.random.normal(0.0, self.obs_noise_std, size=obs.shape)
+            noise = self.np_random.normal(0.0, self.obs_noise_std, size=obs.shape)
             obs = (obs + noise.astype(np.float32))
         return obs
 
@@ -183,6 +183,11 @@ class ContinuousICUSepsisEnv(gym.Env):
             obs (np.ndarray): Shape (47,), normalised physiological features.
             info (dict): Additional info from the underlying environment.
         """
+        # Seed THIS env's own RNG (self.np_random). The clinical wrappers stacked
+        # above resolve self.np_random down to this generator, so seeding here is
+        # what makes the whole wrapper stack's stochasticity reproducible from the
+        # eval/train seed. Also reseed the underlying MDP sampler.
+        super().reset(seed=seed)
         if seed is not None:
             self._raw.np_random, _ = gym.utils.seeding.np_random(seed)
         _, info = self._raw.reset()
