@@ -290,10 +290,10 @@ DQN reaches a stronger peak earlier but is less stable — checkpoint selection 
 
 3.3 Config A vs Config B
 
-| Model  | Configuration (A or B) | Survival rate (%) | Exploration vs Exploitation | Convergence |
-| ----- | ----- | ----- | ----- | ----- |
-| DP |  |  |  |  |
-| DQN |  |  |  |  |
+| Model  | Configuration (A or B) | Survival rate (%) |
+| ----- | ----- | ----- |
+| DP |  |  |
+| DQN |  |  |
 
 (Fill at the end) The best model was X for A Y for B and ….
 
