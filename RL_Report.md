@@ -68,17 +68,17 @@ Spring Semester 2025-2026
 
 [3.2 Configuration B: Continuous Observation Space	8](#heading=h.14pmgouyffex)
 
-[2.2.3 Training and Best-Checkpoint Selection	8](#2.2.3-training-and-best-checkpoint-selection)
+[2.2.3 Training and Best-Checkpoint Selection	8](#heading=h.87pgpcqx37xp)
 
-[2.2.4 Robustness Analysis	9](#2.2.4-robustness-analysis)
+[2.2.4 Robustness Analysis	9](#heading=h.mf90p68kjjia)
 
-[Multi-seed evaluation	9](#multi-seed-evaluation)
+[Multi-seed evaluation	9](#heading=h.1i7zfkpjtw6o)
 
-[Weight initialisation	9](#weight-initialisation)
+[Weight initialisation	9](#heading=h.dyh6uehuw4d9)
 
-[2.2.5 Policy Analysis	9](#2.2.5-policy-analysis)
+[2.2.5 Policy Analysis	9](#heading=h.b7r8mgez2ayl)
 
-[2.2.6 Comparative Summary	10](#2.2.6-comparative-summary)
+[2.2.6 Comparative Summary	10](#heading=h.7gh2jeypg765)
 
 [**4\. Conclusion	10**](#conclusion)
 
@@ -101,6 +101,12 @@ The inherent limitations of static clinical guidelines become apparent when conf
 In this project, we address this sequential optimization challenge by developing and evaluating reinforcement learning agents on the `ICU-Sepsis-v2` benchmark, an environment built directly from the real-world MIMIC-III clinical database. Each training and evaluation episode simulates an individual ICU patient trajectory, where the agent observes the patient's clinical variables at each step and selects an intervention combining vasopressor and IV fluid dosage levels. The episode terminates when the patient either survives (yielding a terminal reward of \+1.0) or dies (yielding a reward of 0); the primary objective of our agents is to maximize this survival rate while simultaneously minimizing unnecessary treatment intensity. To evaluate how reinforcement learning paradigms scale, our approach is structured around two distinct configurations of this underlying environment. In Configuration A, we exploit a finite state space of 716 discrete entries where the full MDP transition and reward matrices are accessible, allowing us to implement a combination of model-based planning alongside model-free, on-policy and off-policy tabular methods. In Configuration B, we transition to a highly realistic, 47-dimensional continuous observation space further complicated by operational clinical wrappers, necessitating deep function approximation through value-based off-policy and policy-gradient on-policy architectures. Ultimately, our comparative analysis tracks learning curves, convergence speeds, and exploration-exploitation dynamics across both environmental setups. 
 
 (Fill with our results at the end) Empirically, our results demonstrate that in the discrete domain of Configuration A, model-based Dynamic Programming established the absolute performance ceiling, while tabular Q-Learning achieved stable convergence within 10,000 episodes, marginally outperforming SARSA's more conservative policy. In the continuous and noisy setting of Configuration B, Proximal Policy Optimisation (PPO) proved significantly more robust than Deep Q-Networks (DQN); PPO exhibited steady, monotonic learning curves and achieved a final patient survival rate of 84%, whereas DQN suffered from severe value overestimation and optimization instability due to the missing data and observation noise. Clinically, the optimal learned policies across both configurations successfully adapted to the treatment intensity penalty. Rather than sustaining aggressive, high-dosage interventions, the best-performing agents discovered a parsimonious strategy: they initiated low-to-medium IV fluid volumes at the earliest signs of physiological distress, while strictly reserving high-tier vasopressor administration for acute, critical drops in blood pressure. This behavior effectively balanced immediate patient stabilization with long-term survival, mirroring safe and optimized intensive care protocols. 
+
+1.2. Environment & Problem Setup (\~0.5 page)
+
+* ICU-Sepsis-v2 description, action space, reward structure  
+* Config A vs Config B: what changes and why it matters  
+* Random baseline as reference point
 
 2. # Methodology  {#methodology}
 
@@ -238,56 +244,6 @@ Despite initial exploration volatility, the trained SARSA policy learned strong 
 
 3.2 Configuration B: Continuous Observation Space
 
-### 2.2.3 Training and Best-Checkpoint Selection {#2.2.3-training-and-best-checkpoint-selection}
-
-Training curves for DQN in RL settings frequently exhibit non-monotonic behaviour: the agent may reach a good policy mid-training that subsequently degrades due to replay buffer shifts or exploration noise. To guard against this, we implemented a `CheckpointCallback` that evaluates the current policy over 100 deterministic episodes every 10,000 steps and saves the best-performing weight snapshot. At the end of training, the best checkpoint is restored before the model is saved.
-
-**DQN** reached its best checkpoint at step 20,000 with **75.0% clinical survival**, then oscillated between 61–72% for the remainder of training (Figure 1). The final-step policy achieved only 70%. Without checkpoint selection, we would have saved the inferior final policy.
-
-**PPO** exhibited more stable training — survival rates grew gradually from 67% to a peak of **72.0% at step 70,000** — consistent with PPO's on-policy stability. The final evaluation also reached 70%, confirming less regression than DQN.
-
-The clinical environment survival rates are somewhat lower than what the clean-environment numbers suggest (≈78% DQN, ≈79% PPO on clean env). This gap is explained by the three clinical wrappers: `EpisodicNoisyObsEnv` adds Gaussian noise to observations, `EpisodicMissingObsEnv` randomly zeros out feature dimensions, and `AcuteEventEnv` introduces a 1% per-step forced-death probability that is independent of the policy. This last wrapper alone forces approximately 9% of episodes to end in death regardless of agent behaviour, creating a hard ceiling of ≈91% on clinical survival. The gap between random baseline (67.2%) and our agents (72–75%) therefore represents genuine policy quality.
-
-### 2.2.4 Robustness Analysis {#2.2.4-robustness-analysis}
-
-#### **Multi-seed evaluation** {#multi-seed-evaluation}
-
-A single seed can produce misleadingly good or bad results due to lucky initialisations or exploration trajectories. We retrained both algorithms with seeds 0, 1, and 42, and evaluated each over 500 episodes. DQN shows a standard deviation of **±2.9 percentage points** across seeds; PPO is more stable at **±1.8 pp**. This is consistent with DQN's higher sensitivity to early exploration and replay buffer composition.
-
-#### **Weight initialisation** {#weight-initialisation}
-
-We investigated whether the default weight initialisation strategy is optimal by comparing three methods applied at construction time: Kaiming Uniform (PyTorch default, designed for ReLU), Orthogonal (SB3 default for policy gradient, preserves gradient norms), and Xavier Normal (designed for sigmoid/tanh activations).
-
-Each algorithm's own default is its best, and swapping them hurts:
-
-* **DQN \+ Kaiming: 78.2% clean** vs Orthogonal 73.6% (−4.6 pp) and Xavier 73.4% (−4.8 pp). Kaiming scales weights by √(2/fan\_in), maintaining activation variance through ReLU layers.  
-* **PPO \+ Orthogonal: 79.2% clean** vs Kaiming 75.0% (−4.2 pp) and Xavier 73.2% (−6.0 pp). Orthogonal initialisation preserves gradient norms, which is especially beneficial for the policy gradient updates PPO uses.
-
-These results confirm that the default choices embedded in the libraries reflect genuine algorithmic considerations, not arbitrary convention.
-
-### 2.2.5 Policy Analysis {#2.2.5-policy-analysis}
-
-To connect the learned policies back to the clinical context, we examined three diagnostics.
-
-**Action distribution.** Both agents concentrate their choices on a subset of the 25 available dose combinations. DQN's distribution is more peaked (higher exploitation), consistent with its greedy Q-value policy. PPO's distribution is more spread (higher entropy), reflecting its explicit entropy bonus. Clinically, neither agent administers extreme interventions uniformly: the most common actions correspond to moderate vasopressor and IV fluid doses, which is consistent with standard ICU guidelines.
-
-**Policy entropy (PPO).** Per-state entropy is highest early in episodes, when patient state is uncertain, and decreases as the episode progresses and the agent becomes more confident in the appropriate treatment. This mirrors clinical practice: early ICU decision-making involves more uncertainty than later-stage management of a stable or deteriorating patient.
-
-**Critic value trajectories (PPO).** We collected critic value estimates V(s) along surviving and dying patient trajectories. Surviving trajectories show consistently higher estimated values from mid-episode onwards, suggesting the critic correctly identifies early indicators of patient stability. Dying trajectories (outside the 1% forced-death events) show a gradual decline in critic values, indicating the agent recognizes deterioration before the terminal step.
-
-### 2.2.6 Comparative Summary {#2.2.6-comparative-summary}
-
-| Metric | DQN | PPO |
-| ----- | ----- | ----- |
-| Best clinical survival (eval) | 75.0% | 72.0% |
-| Clean-env survival | ≈78% | ≈79% |
-| Multi-seed std (clinical) | ±2.9 pp | ±1.8 pp |
-| Training stability | Low (oscillates) | High (monotonic rise) |
-| Best checkpoint step | 20,000 / 100,000 | 70,000 / 100,000 |
-| Best weight init | Kaiming (ReLU default) | Orthogonal (PPO default) |
-
-DQN reaches a stronger peak earlier but is less stable — checkpoint selection is critical. PPO is more consistent but converges more slowly. In the clean environment (without wrappers), performance is nearly identical (78% vs 79%), suggesting both algorithms have learned approximately the same underlying policy. The differences seen in the clinical environment are largely attributable to how each algorithm responds to observation noise and missing features introduced by the wrappers.
-
 3.3 Config A vs Config B
 
 | Model  | Configuration (A or B) | Survival rate (%) |
@@ -296,6 +252,12 @@ DQN reaches a stronger peak earlier but is less stable — checkpoint selection 
 | DQN |  |  |
 
 (Fill at the end) The best model was X for A Y for B and ….
+
+3.4Creative Extension (\~2 pages)
+
+* Motivation and what you expected  
+* Implementation  
+* What you actually found and what it adds clinically
 
 # Interpretability
 
