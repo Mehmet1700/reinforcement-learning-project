@@ -67,7 +67,8 @@ plots/         Saved figures
 | `00_environment_exploration.ipynb` | Q-Learning and SARSA on Config A |
 | `01_config_a_tabular.ipynb` | Q-Learning and SARSA on Config A |
 | `02_config_b_deep_rl.ipynb` | DQN and PPO on Config B |
-| `03_extension.ipynb` | Creative extension |
+| `03_comparison.ipynb` | Configuration comparison |
+| `04_extension.ipynb` | Creative extension |
 
 ## Reproducibility
 
