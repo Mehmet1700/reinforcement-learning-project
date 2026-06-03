@@ -54,19 +54,17 @@ envs/          Provided environment code — do not modify
 agents/        Algorithm implementations
   config_a/    Tabular RL (Q-Learning, SARSA)
   config_b/    Deep RL (DQN, PPO)
-  extension/   Creative extension
 utils/         Shared evaluation and plotting helpers
 notebooks/     One notebook per configuration
-results/       Saved models and training curves (excluded from git)
+results/       Saved models and training curves
 plots/         Saved figures
-report/        Final PDF report
 ```
 
 ## Notebooks
 
 | Notebook | Purpose |
 |----------|---------|
-| `00_environment_exploration.ipynb` | Starter code, env setup, random baselines |
+| `00_environment_exploration.ipynb` | Q-Learning and SARSA on Config A |
 | `01_config_a_tabular.ipynb` | Q-Learning and SARSA on Config A |
 | `02_config_b_deep_rl.ipynb` | DQN and PPO on Config B |
 | `03_extension.ipynb` | Creative extension |
@@ -80,4 +78,4 @@ All experiments use `SEED = 42`. The shared evaluation function `utils/evaluatio
 - Mean return per episode
 - Survival rate (%)
 - Convergence speed
-- Config A vs Config B comparison
+- Exploration vs Exploitation
