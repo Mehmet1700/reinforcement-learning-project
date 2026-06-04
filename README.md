@@ -8,10 +8,10 @@ Deadline: June 5, 2026
 | Name | Student ID |
 |------|------------|
 | Mehmet Karaca  | 20250344 |
-| Luis   | ... |
-| Veronica  | ... |
+| Luis   | 20221949 |
+| Veronica  | 20221945 |
 | Ana Macedo  | 20250405 |
-| Miguel  | ... |
+| Miguel  | 20221925 |
 
 
 ## Project Overview
