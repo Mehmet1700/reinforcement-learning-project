@@ -22,14 +22,13 @@ Clinical reinforcement learning project using the **ICU-Sepsis-v2** environment,
 |---------------|-------------------|---------|
 | **Config A** | Discrete (716 states) | DP, Q-Learning, SARSA |
 | **Config B** | Continuous (47-dim) | DQN, PPO |
-| **Extension** | TBD | TBD |
 
 ## Random Baselines (must beat these)
 
 | Config | Mean Return | Survival Rate |
 |--------|-------------|---------------|
-| Config A | 0.5809 | 68.3% |
-| Config B | 0.5624 | 65.6% |
+| Config A | 0.640 | 74.3% |
+| Config B | 0.586 | 68.3% |
 
 ## Setup
 
@@ -55,7 +54,8 @@ agents/        Algorithm implementations
   config_a/    Tabular RL (Q-Learning, SARSA)
   config_b/    Deep RL (DQN, PPO)
 utils/         Shared evaluation and plotting helpers
-notebooks/     One notebook per configuration
+notebooks/     One notebook per configuration, one for comparison and one action analisys
+Documents/     Report and Project Statement
 results/       Saved models and training curves
 plots/         Saved figures
 ```
@@ -68,7 +68,7 @@ plots/         Saved figures
 | `01_config_a_tabular.ipynb` | Q-Learning and SARSA on Config A |
 | `02_config_b_deep_rl.ipynb` | DQN and PPO on Config B |
 | `03_comparison.ipynb` | Configuration comparison |
-| `04_extension.ipynb` | Creative extension |
+| `04_extension.ipynb` | Creative extension for action analisys |
 
 ## Reproducibility
 
